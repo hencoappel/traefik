@@ -37,7 +37,10 @@ build-webui-image:
 clean-webui:
 	rm -rf webui/static
 
-webui/static/index.html:
+static:
+	mkdir -p webui/static
+
+webui/static/index.html: static
 	$(MAKE) build-webui-image
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn build:prod
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
