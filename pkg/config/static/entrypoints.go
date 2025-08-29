@@ -119,6 +119,7 @@ type TLSConfig struct {
 	Options      string         `description:"Default TLS options for the routers linked to the entry point." json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
 	CertResolver string         `description:"Default certificate resolver for the routers linked to the entry point." json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
 	Domains      []types.Domain `description:"Default TLS domains for the routers linked to the entry point." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+	Store        string         `description:"Default certificate store for the routers linked to the entry point." json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty" export:"true"`
 }
 
 // ForwardedHeaders Trust client forwarding headers.

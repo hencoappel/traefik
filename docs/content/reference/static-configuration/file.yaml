@@ -83,6 +83,7 @@ entryPoints:
             sans:
               - foobar
               - foobar
+        store: foobar
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42

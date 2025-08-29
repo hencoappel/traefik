@@ -23,9 +23,10 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP  []string
-	entryPointsUDP  []string
-	allowACMEByPass map[string]bool
+	entryPointsTCP             []string
+	entryPointsUDP             []string
+	entryPointsDefaultTlsStore map[string]string
+	allowACMEByPass            map[string]bool
 
 	managerFactory *service.ManagerFactory
 
@@ -54,6 +55,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	allowACMEByPass := map[string]bool{}
+	entryPointsDefaultTlsStore := map[string]string{}
 	var entryPointsTCP, entryPointsUDP []string
 	for name, ep := range staticConfiguration.EntryPoints {
 		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
@@ -69,6 +71,9 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		} else {
 			entryPointsTCP = append(entryPointsTCP, name)
 		}
+		if ep.HTTP.TLS != nil && ep.HTTP.TLS.Store != "" {
+			entryPointsDefaultTlsStore[name] = ep.HTTP.TLS.Store
+		}
 	}
 
 	parser, err := httpmuxer.NewSyntaxParser()
@@ -77,15 +82,16 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:   entryPointsTCP,
-		entryPointsUDP:   entryPointsUDP,
-		managerFactory:   managerFactory,
-		observabilityMgr: observabilityMgr,
-		tlsManager:       tlsManager,
-		pluginBuilder:    pluginBuilder,
-		dialerManager:    dialerManager,
-		allowACMEByPass:  allowACMEByPass,
-		parser:           parser,
+		entryPointsTCP:             entryPointsTCP,
+		entryPointsUDP:             entryPointsUDP,
+		entryPointsDefaultTlsStore: entryPointsDefaultTlsStore,
+		managerFactory:             managerFactory,
+		observabilityMgr:           observabilityMgr,
+		tlsManager:                 tlsManager,
+		pluginBuilder:              pluginBuilder,
+		dialerManager:              dialerManager,
+		allowACMEByPass:            allowACMEByPass,
+		parser:                     parser,
 	}, nil
 }
 
@@ -116,7 +122,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 
 	rtTCPManager := tcprouter.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager)
-	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
+	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP, f.entryPointsDefaultTlsStore)
 
 	for ep, r := range routersTCP {
 		if allowACMEByPass, ok := f.allowACMEByPass[ep]; ok && allowACMEByPass {

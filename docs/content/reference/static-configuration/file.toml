@@ -64,6 +64,7 @@
       [entryPoints.EntryPoint0.http.tls]
         options = "foobar"
         certResolver = "foobar"
+        store = "foobar"
 
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"

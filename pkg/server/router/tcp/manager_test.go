@@ -369,7 +369,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager)
 
-			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints, map[string]string{})
 
 			// even though conf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking
@@ -670,7 +670,7 @@ func TestDomainFronting(t *testing.T) {
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
 
-			routers := routerManager.BuildHandlers(t.Context(), entryPoints)
+			routers := routerManager.BuildHandlers(t.Context(), entryPoints, map[string]string{})
 
 			router, ok := routers["web"]
 			require.True(t, ok)

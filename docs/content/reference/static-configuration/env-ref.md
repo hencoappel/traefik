@@ -282,6 +282,9 @@ Subject alternative names.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
 Default TLS options for the routers linked to the entry point.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_STORE`:  
+Default certificate store for the routers linked to the entry point.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_ACCESSLOGS`:  
 Enables access-logs for this entryPoint. (Default: ```true```)
 

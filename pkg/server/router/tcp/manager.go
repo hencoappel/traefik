@@ -72,7 +72,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*Router {
+func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, entryPointsDefaultTLSStore map[string]string) map[string]*Router {
 	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
 	entryPointsRoutersHTTP := m.getHTTPRouters(rootCtx, entryPoints, true)
 
@@ -83,7 +83,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
+		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName], entryPointsDefaultTLSStore[entryPointName])
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -98,7 +98,7 @@ type nameAndConfig struct {
 	TLSConfig  *tls.Config
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler, entryPointDefaultTLSStore string) (*Router, error) {
 	// Build a new Router.
 	router, err := NewRouter()
 	if err != nil {
@@ -110,7 +110,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Even though the error is seemingly ignored (aside from logging it),
 	// we actually rely later on the fact that a tls config is nil (which happens when an error is returned) to take special steps
 	// when assigning a handler to a route.
-	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
+	defaultStoreName := traefiktls.DefaultTLSStoreName
+	if len(entryPointDefaultTLSStore) > 0 {
+		defaultStoreName = entryPointDefaultTLSStore
+	}
+	defaultTLSConf, err := m.tlsManager.Get(defaultStoreName, traefiktls.DefaultTLSConfigName)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Error during the build of the default TLS configuration")
 	}
@@ -185,7 +189,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// Even though the error is seemingly ignored (aside from logging it),
 		// we actually rely later on the fact that a tls config is nil (which happens when an error is returned) to take special steps
 		// when assigning a handler to a route.
-		tlsConf, tlsConfErr := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		tlsConf, tlsConfErr := m.tlsManager.Get(defaultStoreName, tlsOptionsName)
 		if tlsConfErr != nil {
 			// Note: we do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
 			logger.Error().Err(tlsConfErr).Send()

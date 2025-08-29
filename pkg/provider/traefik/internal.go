@@ -254,6 +254,7 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 				Options:      ep.HTTP.TLS.Options,
 				CertResolver: ep.HTTP.TLS.CertResolver,
 				Domains:      ep.HTTP.TLS.Domains,
+				Store:        ep.HTTP.TLS.Store,
 			}
 		}
 
